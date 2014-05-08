@@ -16,7 +16,6 @@ ALLOWHIDDENFILE=/dev/.initramfs
 EOF
 cd $RKHWORKDIR/installed/bin
 ./rkhunter --propupd --report-warnings-only
-./rkhunter --update --report-warnings-only
 ./rkhunter --cronjob --report-warnings-only
 ECODE=$?
 cd /
