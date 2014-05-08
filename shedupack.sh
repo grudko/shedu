@@ -1,11 +1,15 @@
 #!/bin/bash
 remote_cmd="./run.sh"
-shedu_dir=""
+bundle_dir=""
+out_file=""
 
-while getopts ":c:" opt; do
+while getopts ":c:f:" opt; do
   case $opt in
   c)
     remote_cmd=$OPTARG
+    ;;
+  f)
+    out_file=$OPTARG
     ;;
   \?)
     echo "Invalid option: -$OPTARG" >&2
@@ -19,16 +23,17 @@ while getopts ":c:" opt; do
 done
 shift $(($OPTIND - 1))
 
-shedu_dir=$1
-shedu_basename=`basename $shedu_dir`
+bundle_dir=$1
 
-if [ "x$shedu_dir" == "x" ]; then
-  echo "Usage: $0 [-c cmdline] shedu_directory"
+if [ "x$bundle_dir" == "x" ] || [ "x$out_file" == "x" ]; then
+  echo "Usage: $0 [-c cmdline] -f outfile bundle_directory"
   echo "-c cmdline : command to run in bundle directory, default: ./run.sh"
+  echo "-f outfile : package filename"
   exit 1
 fi
 
 current_dir=`pwd`
+out_file=`readlink -f $out_file`
 scriptbundle_tmp=`mktemp -d /tmp/scriptbundle.XXXXXX`
 
 cat >$scriptbundle_tmp/runner.sh << EOF
@@ -44,11 +49,10 @@ exit 0
 __ARCHIVE_BELOW__
 EOF
 
-cd $shedu_dir/bundle
+cd $bundle_dir
 tar czf $scriptbundle_tmp/shedu.tar.gz ./*
 cd $scriptbundle_tmp
-cat runner.sh shedu.tar.gz > $current_dir/$shedu_basename.sh && \
-    chmod +x $current_dir/$shedu_basename.sh
+cat runner.sh shedu.tar.gz > $out_file && \
+    chmod +x $out_file
 cd $current_dir
 rm -rf $scriptbundle_tmp
-
