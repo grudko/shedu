@@ -1,23 +1,6 @@
 #!/bin/bash
-TARBALL=__TARBALL__
-OLDCWD=`pwd`
-RKHWORKDIR=`mktemp -d`
-tar -C $RKHWORKDIR -xf $TARBALL
-cd $RKHWORKDIR
-cd *
-mkdir -p $RKHWORKDIR/installed
-./installer.sh --layout custom $RKHWORKDIR/installed --install
-cat <<EOF >>$RKHWORKDIR/installed/etc/rkhunter.conf
-PKGMGR=DPKG
-ALLOWHIDDENDIR=/etc/.java
-ALLOWHIDDENDIR=/dev/.udev
-ALLOWHIDDENDIR=/dev/.initramfs
-ALLOWHIDDENFILE=/dev/.initramfs
-EOF
-cd $RKHWORKDIR/installed/bin
+cp /etc/group var/lib/rkhunter/tmp/
+cp /etc/passwd var/lib/rkhunter/tmp/
+cd bin
 ./rkhunter --propupd --report-warnings-only
 ./rkhunter --cronjob --report-warnings-only
-ECODE=$?
-cd /
-rm -rf $RKHWORKDIR
-cd $OLDCWD

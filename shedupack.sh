@@ -1,15 +1,19 @@
 #!/bin/bash
 remote_cmd="./run.sh"
-bundle_dir=""
 out_file=""
+unpack_dir=""
+bundle_dir=""
 
-while getopts ":c:f:" opt; do
+while getopts ":c:f:d:" opt; do
   case $opt in
   c)
     remote_cmd=$OPTARG
     ;;
   f)
     out_file=$OPTARG
+    ;;
+  d)
+    unpack_dir=$OPTARG
     ;;
   \?)
     echo "Invalid option: -$OPTARG" >&2
@@ -26,9 +30,10 @@ shift $(($OPTIND - 1))
 bundle_dir=$1
 
 if [ "x$bundle_dir" == "x" ] || [ "x$out_file" == "x" ]; then
-  echo "Usage: $0 [-c cmdline] -f outfile bundle_directory"
-  echo "-c cmdline : command to run in bundle directory, default: ./run.sh"
-  echo "-f outfile : package filename"
+  echo "Usage: $0 [-c cmdline] [-d unpack_dir] -f outfile bundle_directory"
+  echo "-c cmdline    : command to run in bundle directory, default: ./run.sh"
+  echo "-u unpack_dir : directory to extract bundle, default: /tmp/selfextract.XXXXXX"
+  echo "-f outfile    : package filename"
   exit 1
 fi
 
@@ -36,23 +41,21 @@ current_dir=`pwd`
 out_file=`readlink -f $out_file`
 scriptbundle_tmp=`mktemp -d /tmp/scriptbundle.XXXXXX`
 
-cat >$scriptbundle_tmp/runner.sh << EOF
-#!/bin/bash
-export TMPDIR=\`mktemp -d /tmp/selfextract.XXXXXX\`
-ARCHIVE=\`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' \$0\`
-tail -n+\$ARCHIVE \$0 | tar xzv -C \$TMPDIR
-CDIR=\`pwd\`
-cd \$TMPDIR
-$remote_cmd
-cd \$CDIR
-exit 0
-__ARCHIVE_BELOW__
-EOF
+echo "#!/bin/bash" >$scriptbundle_tmp/header.sh
+
+if [ "x$unpack_dir" == "x" ]; then
+  echo "export EXTRACTDIR=\`mktemp -d /tmp/selfextract.XXXXXX\`" >>$scriptbundle_tmp/header.sh
+else
+  echo "export EXTRACTDIR=$unpack_dir; mkdir -p \$EXTRACTDIR;" >>$scriptbundle_tmp/header.sh
+fi
+
+echo "base64 -d <<ENDOFPACKAGE|tar zx -C \$EXTRACTDIR && cd \$EXTRACTDIR && $remote_cmd" >>$scriptbundle_tmp/header.sh
+echo "ENDOFPACKAGE" >>$scriptbundle_tmp/footer.sh
 
 cd $bundle_dir
-tar czf $scriptbundle_tmp/shedu.tar.gz ./*
+tar czf -  ./* |base64 > $scriptbundle_tmp/payload.base64
 cd $scriptbundle_tmp
-cat runner.sh shedu.tar.gz > $out_file && \
+cat header.sh payload.base64 footer.sh > $out_file && \
     chmod +x $out_file
 cd $current_dir
 rm -rf $scriptbundle_tmp
