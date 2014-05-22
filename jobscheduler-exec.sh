@@ -6,4 +6,4 @@
 ./shedurun.sh edubba/$1
 [ -n "$SCHEDULER_PARAM_HOST" ] || { echo "Run this script via SOS GmbH JobScheduler with job parameter 'host'"; exit 1; }
 HOST=$SCHEDULER_PARAM_HOST
-ssh root@$HOST < edubba/$1/pack
+ssh root@$HOST bash < edubba/$1/pack

@@ -12,6 +12,17 @@ ALLOWHIDDENDIR=/etc/.java
 ALLOWHIDDENDIR=/dev/.udev
 ALLOWHIDDENFILE=/dev/.initramfs
 ALLOWDEVFILE=/dev/kmsg
+ALLOWDEVFILE="/dev/.udev/queue.bin"
+ALLOWDEVFILE="/dev/.udev/db/net:eth0"
+ALLOWDEVFILE="/dev/.udev/db/input:*"
+ALLOWDEVFILE="/dev/.udev/db/block:*"
+ALLOWDEVFILE="/dev/.udev/db/usb:*"
+ALLOWDEVFILE="/dev/.udev/db/drm:card0"
+ALLOWDEVFILE="/dev/.udev/rules.d/99-root.rules"
+ALLOWDEVFILE="/dev/.udev/rules.d/root.rules"
+XINETD_ALLOWED_SVC=/etc/xinetd.d/reload_php
+XINETD_ALLOWED_SVC=/etc/xinetd.d/firebird25
+DISABLE_TESTS=avail_modules loaded_modules suspscan hidden_ports hidden_procs deleted_files packet_cap_apps
 EOF
 cd $1/bin
 ./rkhunter --update --report-warnings-only
